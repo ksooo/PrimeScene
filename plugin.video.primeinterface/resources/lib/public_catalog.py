@@ -22,10 +22,11 @@ except ImportError:
 
 
 ORIGIN = 'https://www.primevideo.com'
-# Use Amazon's published Prime membership storefront, then split by title type.
-# The broad /movie and /tv feeds also market rentals, channels and free-with-ads.
-PAGES = {'watching': '/storefront', 'home': '/storefront', 'movies': '/storefront/subscription/prime',
-         'tv': '/storefront/subscription/prime', 'sports': '/sports', 'channels': '/addons',
+# Outside the US the Prime membership storefront has a single row and no
+# continuation. The /movie and /tv feeds also list rentals and channels, which
+# the Prime-included filter removes.
+PAGES = {'watching': '/storefront', 'home': '/storefront', 'movies': '/storefront/movie',
+         'tv': '/storefront/tv', 'sports': '/sports', 'channels': '/addons',
          'purchases': '/mystuff', 'watchlist': '/mystuff'}
 from .regional_hosts import (PRIME_WEB_HOSTS,CATALOG_NAV_HOSTS,storefront_sso,storefront_relay,
     strip_redirect_headers,POLICY_REVISION,https_host,storefront_path,url_rejection)
