@@ -211,6 +211,7 @@ class Form:
     choices: list = field(default_factory=list)
     other_controls: bool = False
     unsupported: list = field(default_factory=list)
+    method: str = 'post'
 
 
 class SignInDocument(HTMLParser):
@@ -286,8 +287,9 @@ class SignInDocument(HTMLParser):
             self.signed_in_navigation = True
         if tag == 'form':
             self.form = None
-            if (attrs.get('method') or '').lower() == 'post':
-                self.form = Form(attrs.get('action') or '', element_id or name)
+            method = (attrs.get('method') or '').lower()
+            if method == 'post' or (method == 'get' and element_id == 'pollingForm'):
+                self.form = Form(attrs.get('action') or '', element_id or name, method=method)
         if element_id in ('pollingForm', 'auth-polling-container'):
             self.approval_required = True
         if 'captcha' in (name + ' ' + element_id).lower():
@@ -551,12 +553,17 @@ def authenticate(cookies, prompt, *, observer=None, approve=None, choose=None, c
             fields = list(form.hidden)
             if form.submit:
                 fields.append(form.submit)
-            url, page = read_page(target, fields=fields, previous=url, stage='sign-in approval')
-            status = page.approval_status
+            if form.method == 'get':
+                target, fields = target + '?' + urlencode(fields), None
+            poll_url, poll = read_page(target, fields=fields, previous=url, stage='sign-in approval')
+            status = poll.approval_status
             if status in ('TransactionCompleted', 'TransactionCompletionTimeout'):
                 url, page = read_page(return_url)
             elif status == 'TransactionExpired':
                 raise SignInError('Amazon sign-in approval expired. Start a fresh sign-in attempt.')
+            elif not status:
+                url, page = poll_url, poll
+            # A pending approval keeps the approval page, so the next pass asks again.
             continue
         if page.captcha_required and not code_entry and not image_entry:
             raise SignInError('Amazon requested a security challenge without a supported image-entry form.')
