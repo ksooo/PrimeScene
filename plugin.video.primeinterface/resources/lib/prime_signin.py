@@ -35,6 +35,7 @@ MAX_DOCUMENT_BYTES = 8 * 1024 * 1024
 CODE_FIELDS = {'otpcode', 'otppin', 'verificationcode', 'cvf_otp_input', 'mfa_otp_code'}
 CODE_FORM_IDS = {'fwcim-form', 'verification-code-form', 'auth-mfa-form'}
 CAPTCHA_FIELDS = {'guess', 'cvf_captcha_input', 'field-keywords'}
+VOID_TAGS = ('input', 'img', 'br', 'hr', 'meta', 'link', 'source', 'wbr')
 IMAGE_HOSTS = SECURITY_IMAGE_HOSTS
 
 
@@ -235,18 +236,27 @@ class SignInDocument(HTMLParser):
         self.profile_name = ''
         self._profile_depth = 0
         self._profile_text = []
+        self._error_depth = 0
+        self._error_content = 0
+        self._error_text = []
         self.feed(html)
         self.close()
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if self._profile_depth and tag not in ('input', 'img', 'br', 'hr', 'meta', 'link', 'source', 'wbr'):
+        if self._profile_depth and tag not in VOID_TAGS:
             self._profile_depth += 1
         if attrs.get('data-automation-id') == 'nav-active-profile-name':
             self._profile_depth = 1
             self._profile_text = []
         name = attrs.get('name') or ''
         element_id = attrs.get('id') or ''
+        if self._error_depth and tag not in VOID_TAGS:
+            self._error_depth += 1
+            if not self._error_content and 'a-alert-content' in (attrs.get('class') or '').split():
+                self._error_content = self._error_depth
+        if element_id == 'auth-error-message-box':
+            self._error_depth = 1
         if tag == 'iframe':
             self.embedded.append({'id': element_id, 'source': attrs.get('src') or ''})
         if element_id in ('auth-mfa-form', 'pollingForm', 'auth-polling-container', 'fwcim-form',
@@ -340,6 +350,10 @@ class SignInDocument(HTMLParser):
             self._profile_depth -= 1
             if self._profile_depth == 0:
                 self.profile_name = ' '.join(''.join(self._profile_text).split())
+        if self._error_depth:
+            if self._error_depth == self._error_content:
+                self._error_content = 0
+            self._error_depth -= 1
         if tag == 'select' and self.country_select is not None:
             value = self.country_select['selected'] or self.country_select['first']
             if self.form is not None and value is not None:
@@ -372,9 +386,15 @@ class SignInDocument(HTMLParser):
             self.forms.append(self.form)
             self.form = None
 
+    @property
+    def error_message(self):
+        return ' '.join(''.join(self._error_text).split())
+
     def handle_data(self, data):
         if self._profile_depth:
             self._profile_text.append(data)
+        if self._error_content:
+            self._error_text.append(data)
         if self.script_data is not None:
             self.script_data.append(data)
         else:
@@ -554,7 +574,8 @@ def authenticate(cookies, prompt, *, observer=None, approve=None, choose=None, c
             raise SignInError('Smooth Prime could not verify your Prime Video session or read the next Amazon sign-in step.')
         names = {name for name, label, _ in form.prompts if label not in ('Amazon verification code', 'Amazon security image')}
         if names & attempted and not image_entry:
-            raise SignInError('Amazon asked for the same information again. Check your details and retry.')
+            raise SignInError('Amazon: ' + page.error_message if page.error_message else
+                              'Amazon asked for the same information again. Check your details and retry.')
         attempted.update(names)
         fields = list(form.hidden)
         for group in dict.fromkeys(choice.name for choice in form.choices):
