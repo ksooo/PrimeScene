@@ -62,3 +62,6 @@ place. See NOTICE.md and LICENSE for current source and asset licensing.
 
 
 0.2.44: Complete user-requested restoration of0.2.34, including its original assets and menu data. Every non-release-metadata package member is byte-identical to the verified original0.2.34 ZIP. Only version/news/changelog/README differ so Kodi accepts this as release0.2.44. Restart Kodi after updating.
+
+
+0.2.45: Repairs the focus/navigation regression identified in real 0.2.44 logs and the local manifest HEAD path implicated in Stop timeouts. This is a targeted patch of the restored 0.2.34 runtime. Login, dependency versions, security changes and artwork remain unchanged. Kodi add-on last-used ordering is still under investigation.
