@@ -30,7 +30,7 @@ PAGES = {'watching': '/storefront', 'home': '/storefront', 'movies': '/storefron
 from .regional_hosts import (PRIME_WEB_HOSTS,CATALOG_NAV_HOSTS,storefront_sso,storefront_relay,
     strip_redirect_headers,POLICY_REVISION,https_host,storefront_path,url_rejection)
 STOREFRONT_HOSTS = CATALOG_NAV_HOSTS
-IMAGE_HOSTS = {'m.media-amazon.com', 'images-na.ssl-images-amazon.com'}
+IMAGE_HOSTS = {'m.media-amazon.com', 'images-na.ssl-images-amazon.com', 'images-eu.ssl-images-amazon.com'}
 MAX_PAGE_BYTES = 8 * 1024 * 1024
 MAX_JSON_NODES = 100000
 MAX_JSON_DEPTH = 40
@@ -380,9 +380,9 @@ def _json_card(node, page_url):
         if title:
             break
     shots = _shot_map(node)
-    landscape = _first_shot(shots, ('landscape', 'packshot', 'thumbnail', 'thumb', 'wide'))
+    landscape = _first_shot(shots, ('landscape', 'packshot', 'thumbnail', 'thumb', 'wide', 'hero'))
     artwork = landscape or _first_shot(shots, ('image', 'src'))
-    poster = _first_shot(shots, ('titleshot', 'covershot', 'poster', 'cover', 'boxart', 'tall'))
+    poster = _first_shot(shots, ('titleshot', 'covershot', 'poster', 'cover', 'boxart', 'tall', 'poster2x3'))
     fanart = _first_shot(shots, ('heroshot', 'hero', 'fanart', 'background', 'backdrop'))
     if not artwork:
         for key in ('image', 'images', 'imageUrl', 'imageURL', 'imageUrls', 'imageURLs',
