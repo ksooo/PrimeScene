@@ -65,3 +65,12 @@ place. See NOTICE.md and LICENSE for current source and asset licensing.
 
 
 0.2.45: Repairs the focus/navigation regression identified in real 0.2.44 logs and the local manifest HEAD path implicated in Stop timeouts. This is a targeted patch of the restored 0.2.34 runtime. Login, dependency versions, security changes and artwork remain unchanged. Kodi add-on last-used ordering is still under investigation.
+
+
+0.2.46: Corrects low-resolution scrolling backgrounds. Separate Amazon heroshots are preferred at 1920 pixels; a full-resolution cover preview is used while the genuine backdrop is unavailable. Background metadata look-ahead is bounded to the selected title and next two titles, with existing description read-ahead preserved. Account-scoped saved metadata retains genuine backdrop URLs. Layout, navigation, login and playback implementations are unchanged.
+
+
+0.2.47: Corrects hero title typography. Main-title and continuation lines can both contain several words. Colon subtitles keep the colon on the large top line; spaced dashes start the smaller subtitle. Long titles without separators wrap between words, with smaller continuation lines. Short titles stay intact. Provider spelling, the existing font, navigation, artwork selection and playback remain unchanged.
+
+
+0.2.48: Restores native Kodi last-used tracking through normal video plug-in registration. The dedicated interface opens in the same invocation, with an owned artwork overlay during the directory handoff and explicit cleanup before interaction. Exit returns to Kodi Home; signed-out Back no longer opens an empty genre grid. Actual isolated Kodi 22 RC2 run confirmed native lastUsed advancement, the existing application window, overlay removal and one Back to Home. No direct writes to Kodi's shared database and no provider login or playback test. Login, catalog fetching, playback, title layout and backdrop selection remain unchanged.
