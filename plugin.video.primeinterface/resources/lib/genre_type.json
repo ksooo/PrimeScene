@@ -1,0 +1,221 @@
+{
+  "schema": 2,
+  "font": "BebasNeue-Regular.ttf",
+  "titles": {
+    "Action": {
+      "title": "genre-deb793c68d98.png",
+      "spine": "spine-3580469d06f3.png",
+      "lines": [
+        "ACTION"
+      ]
+    },
+    "Action & adventure": {
+      "title": "genre-8185cea952a1.png",
+      "spine": "spine-e7017faea536.png",
+      "lines": [
+        "ACTION &",
+        "ADVENTURE"
+      ]
+    },
+    "Adventure": {
+      "title": "genre-3abddb903efa.png",
+      "spine": "spine-549f2b17195c.png",
+      "lines": [
+        "ADVENTURE"
+      ]
+    },
+    "All TV shows": {
+      "title": "genre-1244df2d83ff.png",
+      "spine": "spine-dcba0c70c613.png",
+      "lines": [
+        "ALL TV SHOWS"
+      ]
+    },
+    "All movies": {
+      "title": "genre-7f0718118fad.png",
+      "spine": "spine-789c91216663.png",
+      "lines": [
+        "ALL MOVIES"
+      ]
+    },
+    "Animation": {
+      "title": "genre-013ba1fb7c7f.png",
+      "spine": "spine-51c95d4c9ad8.png",
+      "lines": [
+        "ANIMATION"
+      ]
+    },
+    "Anime": {
+      "title": "genre-441830dbbe0e.png",
+      "spine": "spine-ff481f81aecb.png",
+      "lines": [
+        "ANIME"
+      ]
+    },
+    "Comedy": {
+      "title": "genre-82287d8cf501.png",
+      "spine": "spine-7f6aa4a93812.png",
+      "lines": [
+        "COMEDY"
+      ]
+    },
+    "Crime": {
+      "title": "genre-3dcc468a1e31.png",
+      "spine": "spine-ff32a18957b5.png",
+      "lines": [
+        "CRIME"
+      ]
+    },
+    "Documentary": {
+      "title": "genre-f1a21e62f3e1.png",
+      "spine": "spine-dd6a995c7b8d.png",
+      "lines": [
+        "DOCUMENTARY"
+      ]
+    },
+    "Drama": {
+      "title": "genre-426ba832bb5f.png",
+      "spine": "spine-870b752b8540.png",
+      "lines": [
+        "DRAMA"
+      ]
+    },
+    "Family": {
+      "title": "genre-7ed6f4c51209.png",
+      "spine": "spine-0c0a9c87f940.png",
+      "lines": [
+        "FAMILY"
+      ]
+    },
+    "Fantasy": {
+      "title": "genre-7284928fd12f.png",
+      "spine": "spine-560c2a455e3a.png",
+      "lines": [
+        "FANTASY"
+      ]
+    },
+    "Historical": {
+      "title": "genre-ee1f3712fd8a.png",
+      "spine": "spine-60a0b4714191.png",
+      "lines": [
+        "HISTORICAL"
+      ]
+    },
+    "Horror": {
+      "title": "genre-816103839704.png",
+      "spine": "spine-173af5934866.png",
+      "lines": [
+        "HORROR"
+      ]
+    },
+    "Kids & family": {
+      "title": "genre-24f7c728136c.png",
+      "spine": "spine-6d692ee13c1a.png",
+      "lines": [
+        "KIDS & FAMILY"
+      ]
+    },
+    "Music": {
+      "title": "genre-3c103bf9f63e.png",
+      "spine": "spine-08d5f92ca9e9.png",
+      "lines": [
+        "MUSIC"
+      ]
+    },
+    "Musicals": {
+      "title": "genre-d7d5b4da0a45.png",
+      "spine": "spine-063e9e2403ab.png",
+      "lines": [
+        "MUSICALS"
+      ]
+    },
+    "Mystery": {
+      "title": "genre-7533d3172cf8.png",
+      "spine": "spine-9a26a76fee31.png",
+      "lines": [
+        "MYSTERY"
+      ]
+    },
+    "Mystery & thriller": {
+      "title": "genre-79d5f1fafb01.png",
+      "spine": "spine-c3e70d7eae96.png",
+      "lines": [
+        "MYSTERY &",
+        "THRILLER"
+      ]
+    },
+    "Romance": {
+      "title": "genre-1a08a3ef6eb0.png",
+      "spine": "spine-bbe4e712197e.png",
+      "lines": [
+        "ROMANCE"
+      ]
+    },
+    "Romantic comedy": {
+      "title": "genre-a12b3f33b487.png",
+      "spine": "spine-8db635245d1d.png",
+      "lines": [
+        "ROMANTIC",
+        "COMEDY"
+      ]
+    },
+    "Science fiction": {
+      "title": "genre-fe0beea1a12d.png",
+      "spine": "spine-4c9e85d7cf2e.png",
+      "lines": [
+        "SCIENCE FICTION"
+      ]
+    },
+    "Science fiction & fantasy": {
+      "title": "genre-868f63d61d0c.png",
+      "spine": "spine-d23f93c09692.png",
+      "lines": [
+        "SCIENCE FICTION",
+        "& FANTASY"
+      ]
+    },
+    "Sports": {
+      "title": "genre-bd0e9ee7d72b.png",
+      "spine": "spine-5ed598f0566a.png",
+      "lines": [
+        "SPORTS"
+      ]
+    },
+    "Suspense": {
+      "title": "genre-68236f1f85d6.png",
+      "spine": "spine-c6837ea765f2.png",
+      "lines": [
+        "SUSPENSE"
+      ]
+    },
+    "Thriller": {
+      "title": "genre-87bc9dfdec26.png",
+      "spine": "spine-80e37803b97e.png",
+      "lines": [
+        "THRILLER"
+      ]
+    },
+    "Western": {
+      "title": "genre-f13aa67e25e9.png",
+      "spine": "spine-2a9f8d30cf97.png",
+      "lines": [
+        "WESTERN"
+      ]
+    }
+  },
+  "layout": {
+    "model": "fixed_font_equal_canvas",
+    "canvas": [
+      1520,
+      700
+    ],
+    "font_pixels": 288,
+    "line_step_pixels": 252,
+    "output_box": [
+      760,
+      350
+    ],
+    "output_font_pixels": 144,
+    "glyph_resize": false
+  }
+}
