@@ -24,8 +24,11 @@ ORIGIN = 'https://www.primevideo.com'
 # Use Amazon's published Prime membership storefront, then split by title type.
 # The broad /movie and /tv feeds also market rentals, channels and free-with-ads.
 PAGES = {'watching': '/storefront', 'home': '/storefront', 'movies': '/storefront/subscription/prime',
-         'tv': '/storefront/subscription/prime', 'sports': '/sports', 'channels': '/addons', 'purchases': '/mystuff'}
-STOREFRONT_HOSTS = {'www.primevideo.com', 'primevideo.com', 'na.primevideo.com'}
+         'tv': '/storefront/subscription/prime', 'sports': '/sports', 'channels': '/addons',
+         'purchases': '/mystuff', 'watchlist': '/mystuff'}
+from .regional_hosts import (PRIME_WEB_HOSTS,CATALOG_NAV_HOSTS,storefront_sso,storefront_relay,
+    strip_redirect_headers,POLICY_REVISION,https_host)
+STOREFRONT_HOSTS = CATALOG_NAV_HOSTS
 IMAGE_HOSTS = {'m.media-amazon.com', 'images-na.ssl-images-amazon.com'}
 MAX_PAGE_BYTES = 8 * 1024 * 1024
 MAX_JSON_NODES = 100000
@@ -41,7 +44,8 @@ def _protocol_shape(document):
                  'view-filter filters viewType active applied isCurrentlyApplied baseOutput containers '
                  'emptyState errorCode errorType entitlementCues offerClassification providerLogo '
                  'entitlementType offerType').split())
-    known.update(('entities','hasMoreItems','startIndex','serviceToken','paginationServiceToken',
+    known.update(('init','preparations','config','selected','isSelected','isEmpty','loading','isLoading','estimatedTotal',
+        'entities','hasMoreItems','startIndex','serviceToken','paginationServiceToken',
         'paginationTargetId','paginationStartIndex','swiftPageParameters','primeVideoCapability',
         'isContinueWatching','containerType','progress','percentage','resumeTime','playbackActions','runtime','entityType'))
     stack, result = [('$', document, 0)], []
@@ -91,6 +95,7 @@ class CatalogPage:
     library_confirmed: bool = False
     next_request: dict = None
     empty_confirmed: bool = False
+    watchlist_confirmed: bool = False
 
 
 def _remember_card(cards, key, card):
@@ -181,27 +186,35 @@ def _continuation_link(value, page_url):
 
 
 def _image(value, depth=0):
+    from .image_quality import declared_resolution
     if depth > 6:
         return ''
     if isinstance(value, str):
         return safe_url(value, IMAGE_HOSTS)
     if isinstance(value, dict):
+        candidates=[]
         for key in ('url', 'src', 'imageUrl', 'imageURL', 'packshot', 'poster',
                     'thumbnail', 'cover', 'wide', 'tall', 'square'):
             found = _image(value.get(key), depth + 1)
             if found:
-                return found
+                candidates.append((declared_resolution(found,value.get('width'),value.get('height')),found))
         # Image dimension/locale maps contain image values, never title-card subtrees.
         for child in value.values():
             if isinstance(child, str):
                 found = safe_url(child, IMAGE_HOSTS)
                 if found:
-                    return found
+                    candidates.append((declared_resolution(found),found))
+            elif isinstance(child,(dict,list)):
+                found=_image(child,depth+1)
+                if found:candidates.append((declared_resolution(found,child.get('width') if isinstance(child,dict) else None,child.get('height') if isinstance(child,dict) else None),found))
+        if candidates:return max(candidates,key=lambda candidate:candidate[0])[1]
     elif isinstance(value, list):
+        candidates=[]
         for child in value:
             found = _image(child, depth + 1)
             if found:
-                return found
+                candidates.append((declared_resolution(found,child.get('width') if isinstance(child,dict) else None,child.get('height') if isinstance(child,dict) else None),found))
+        if candidates:return max(candidates,key=lambda candidate:candidate[0])[1]
     return ''
 
 
@@ -229,6 +242,10 @@ def _shot_map(node):
 
 
 def _first_shot(shots, names):
+    if names and set(names).issubset({'heroshot','hero','fanart','background','backdrop'}):
+        from .image_quality import declared_resolution
+        candidates=[shots[name] for name in names if shots.get(name)]
+        return max(candidates,key=declared_resolution) if candidates else ''
     for name in names:
         if shots.get(name):
             return shots[name]
@@ -601,20 +618,20 @@ class StorefrontRedirect(HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         newurl = urljoin(req.full_url, newurl)
-        sso = safe_url(newurl, {'www.amazon.com', 'amazon.com'})
-        is_sso = bool(sso) and urlsplit(sso).path == '/ax/sso/redirect'
-        allowed = bool(safe_url(newurl, STOREFRONT_HOSTS)) or is_sso
-        _emit(self.observer, {'event': 'catalog_redirect', 'status': code,
-                              'from': route(req.full_url), 'to': route(newurl), 'allowed': allowed})
+        is_sso = storefront_sso(req.full_url,newurl,code,req.get_method(),req.data is not None)
+        is_relay=storefront_relay(req.full_url,newurl,code,req.get_method(),req.data is not None)
+        allowed = bool(https_host(newurl,PRIME_WEB_HOSTS)) or is_sso or is_relay
+        if code in (307,308) and req.data is not None and urlsplit(req.full_url).hostname!=urlsplit(newurl).hostname:
+            allowed=False
+        _emit(self.observer, {'event': 'catalog_redirect', 'stage':'storefront_redirect', 'status': code,
+                              'from': route(req.full_url), 'to': route(newurl), 'allowed': allowed,
+                              'policy_revision':POLICY_REVISION,'regional_sso':is_sso,'regional_relay':is_relay,
+                              'method':req.get_method(),'result':'allowed' if allowed else 'blocked'})
         if not allowed:
             raise PublicCatalogError('Prime Video redirected outside its storefront. The session may need sign-in again.')
         redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
         if redirected is not None:
-            for name in ('Cookie', 'Host', 'Authorization', 'Proxy-Authorization'):
-                redirected.remove_header(name.capitalize())
-            if urlsplit(req.full_url).hostname != urlsplit(newurl).hostname:
-                for name in ('Referer', 'Origin'):
-                    redirected.remove_header(name)
+            strip_redirect_headers(redirected)
         return redirected
 
 
@@ -689,7 +706,7 @@ def _read_page(data, content_type, page_url):
     return CatalogPage(list(cards.values()), next_url,empty_confirmed=empty_confirmed), details
 
 
-def fetch_page(page, opener=None, continuation=None, observer=None, _library_depth=0):
+def fetch_page(page, opener=None, continuation=None, observer=None, _library_depth=0, _library_seen=()):
     """Fetch one server page; continuation must be an actual link from its predecessor."""
     started = perf_counter()
     parent_observer=observer;request_id=token_hex(8)
@@ -708,7 +725,7 @@ def fetch_page(page, opener=None, continuation=None, observer=None, _library_dep
                          'continuation': continuation is not None, 'address': route(address), 'method': 'POST' if collection else 'GET',
                          'collection_request':collection})
         request_headers={'Accept':'text/html, application/json;q=0.9',**extra_headers}
-        if page == 'watching':request_headers.update({'Cache-Control':'no-cache, no-store','Pragma':'no-cache'})
+        if page in ('watching','watchlist'):request_headers.update({'Cache-Control':'no-cache, no-store','Pragma':'no-cache'})
         request = Request(address, data=request_data, headers=request_headers)
         opener = opener if opener is not None else build_opener(StorefrontRedirect(observer))
         stage = 'fetch'
@@ -717,12 +734,12 @@ def fetch_page(page, opener=None, continuation=None, observer=None, _library_dep
             status = response.getcode()
             content_type = response.headers.get_content_type()
             _emit(observer, {'event': 'catalog_response_received', 'stage': stage, 'status': status,
-                             'address': route(final_url), 'content_type': content_type, 'fresh_requested':page == 'watching',
+                             'address': route(final_url), 'content_type': content_type, 'fresh_requested':page in ('watching','watchlist'),
                              'cache_age':response.headers.get('Age'),'cache_control':response.headers.get('Cache-Control'),
                              'server_date':response.headers.get('Date'),
                              'server_request_id': response.headers.get('x-amzn-requestid') or response.headers.get('x-amz-rid'),
                              'elapsed_ms': round((perf_counter() - started) * 1000)})
-            if not safe_url(final_url, STOREFRONT_HOSTS):
+            if not https_host(final_url,PRIME_WEB_HOSTS):
                 raise PublicCatalogError('Prime Video did not return to its storefront.')
             stage = 'read_response'
             body_started=perf_counter()
@@ -766,23 +783,41 @@ def fetch_page(page, opener=None, continuation=None, observer=None, _library_dep
                 raise
             next_request=collection_paging.discover(data,content_type,final_url,observer,scope='watching')
             if next_request:result=replace(result,next_request=next_request,empty_confirmed=False)
-        elif page == 'purchases':
-            from .purchases_catalog import read_library
+        elif page in ('purchases','watchlist') and collection:
+            if continuation.get('scope')!=page:
+                raise PublicCatalogError('The personal continuation has no confirmed collection scope.')
+            result,details=_read_page(data,content_type,final_url)
+            next_request=collection_paging.advance(continuation,data,content_type,observer)
+            if page=='purchases':result=replace(result,cards=[replace(card,access_evidence=merge_evidence(card.access_evidence,'account_library')) for card in result.cards])
+            result=replace(result,watchlist_confirmed=page=='watchlist',library_confirmed=page=='purchases',next_request=next_request)
+        elif page in ('purchases','watchlist'):
+            from .purchases_catalog import read_library,navigation_identity
             result, details, library_link = read_library(data, content_type, final_url,
-                                                       selected=continuation is not None)
+                                                       selected=continuation is not None,collection=page)
+            details.update(collection_confirmed=details.get('collection_scope_confirmed',details.get('library_confirmed',False)),
+                watchlist_confirmed=bool(result and result.watchlist_confirmed),
+                library_confirmed=bool(result and result.library_confirmed))
             _emit(observer, dict(details, event='library_response_parsed', stage=stage,
                 status=status, address=route(final_url), bytes=len(raw),
                 elapsed_ms=round((perf_counter() - started) * 1000)))
             if details.get('library_authentication_required'):
                 raise PublicSigninRequired('Use Sign out, then sign in again to reconnect your Amazon session.')
             if library_link and _library_depth < 3:
+                target=navigation_identity(library_link);current=navigation_identity(final_url)
+                if target==current or target in _library_seen:
+                    _emit(observer,{'event':'personal_navigation_cycle_blocked','stage':'library_discovery',
+                        'collection':page,'address':route(library_link),'result':'failure'})
+                    raise PublicCatalogError('Amazon repeated the selected personal collection page. Open Diagnostics.')
                 _emit(observer, {'event': 'library_navigation_followed', 'stage': 'library_discovery',
                     'from': route(final_url), 'to': route(library_link), 'hop': _library_depth + 1,
                     'result': 'success'})
                 return fetch_page(page, opener=opener, continuation=library_link, observer=observer,
-                                  _library_depth=_library_depth + 1)
+                                  _library_depth=_library_depth + 1,_library_seen=_library_seen+(current,))
             if result is None:
-                raise PublicCatalogError('Amazon did not expose a recognized Purchases & Rentals library. Open Diagnostics for the report.')
+                raise PublicCatalogError('Amazon did not expose a recognized %s collection. Open Diagnostics for the report.'%
+                    ('Watchlist' if page=='watchlist' else 'Purchases & Rentals'))
+            next_request=collection_paging.discover(data,content_type,final_url,observer,scope=page)
+            if next_request:result=replace(result,next_request=next_request,empty_confirmed=False)
         else:
             result, details = _read_page(data, content_type, final_url)
             next_request=(collection_paging.advance(continuation,data,content_type,lambda value:_emit(observer,value)) if collection
@@ -794,7 +829,11 @@ def fetch_page(page, opener=None, continuation=None, observer=None, _library_dep
                              elapsed_ms=round((perf_counter() - started) * 1000)))
         if details.get('sign_in_form_present') or details.get('verification_form_present'):
             raise PublicSigninRequired('Use Sign out, then sign in again to reconnect your Amazon session.')
-        if not result.cards and result.next_url is None and result.next_request is None and not result.library_confirmed and not result.empty_confirmed and not collection:
+        if page in ('purchases','watchlist') and not result.cards and not result.next_url and not result.next_request and not result.empty_confirmed:
+            _emit(observer,{'event':'personal_collection_unknown','stage':'parse_response','collection':page,
+                'status':status,'address':route(final_url),'empty_confirmed':False,'result':'failure'})
+            raise PublicCatalogError('The personal collection could not be read; an empty collection was not confirmed. Open Diagnostics.')
+        if not result.cards and result.next_url is None and result.next_request is None and not result.library_confirmed and not result.watchlist_confirmed and not result.empty_confirmed and not collection:
             raise PublicCatalogError('No title cards or page continuation were found in the catalog response.')
         _emit(observer, {'event': 'catalog_request_completed', 'stage': 'complete', 'result': 'success',
                          'cards': len(result.cards), 'has_next': bool(result.next_url or result.next_request),'empty_confirmed':result.empty_confirmed,
