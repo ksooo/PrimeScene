@@ -1,7 +1,7 @@
-0.2.60
-- Read selected Watchlist and Purchases collections without looping through tracking-link variants.
-- Distinguish confirmed empty account lists from unreadable, unfinished or failed responses; preserve collection pagination.
-- Choose distinct original Amazon backdrops for genres, All Movies/TV and Purchases without loading entire categories.
-- Prepare the first four genre backdrops concurrently and make each movie image available before TV metadata finishes.
-- Reuse verified regional artwork cache entries and continue background retries after bounded startup recovery.
-- Record collection parsing and per-image startup stages, timings and redacted failures.
+0.2.62
+- Read Amazon My Stuff pagination metadata and keep readable Watchlist titles with an explicit retry notice if later pages fail.
+- Prepare focused TV seasons in the background, share pending title reads and reuse decoded TV documents.
+- Show Amazon location-refusal details and record playback failures separately from user cancellations.
+- Use one fixed content-title size and one smaller continuation size, with equal canvases and wrapped overflow.
+- Request original-quality Amazon artwork for cards, posters, backgrounds, genres and Extras; remove reduced-size cache reuse.
+- Expand redacted pagination, artwork selection, source dimensions, provider-error and timing diagnostics.

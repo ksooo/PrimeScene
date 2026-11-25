@@ -8,12 +8,8 @@ from .tv_catalog import _info,_kind,parse_tv_page
 
 
 def documents(data,content_type,address):
-    if content_type.endswith('json'):return [json.loads(data)]
-    parser=StorefrontParser(address);parser.feed(data);parser.close();result=[]
-    for value in parser.json_scripts:
-        try:result.append(json.loads(value))
-        except ValueError:continue
-    return result
+    from .provider_documents import read_documents
+    return read_documents(data,content_type)[0]
 
 
 def state_records(docs):
@@ -37,7 +33,8 @@ def playable(identifier,label,info,pluginid,material='Feature'):
 
 
 def parse_detail(data,content_type,address,pluginid,observer):
-    docs=documents(data,content_type,address);states=state_records(docs)
+    from .provider_documents import read_documents
+    docs,extraction,_=read_documents(data,content_type);states=state_records(docs)
     # Only pageTitleId declares the selected product; recommendations are never
     # used to invent a title's playback ID or season relationships.
     selected=next((s for s in states if s.get('detail') or s.get('self')),None)
@@ -68,7 +65,8 @@ def parse_detail(data,content_type,address,pluginid,observer):
     if not label:raise PublicCatalogError('Selected title has no title label')
     if kind in ('tvshow','season'):
         if any((s.get('episodeList') or {}).get('cardTitleIds') for s in related):
-            return parse_tv_page(data,content_type,address,pluginid,observer)
+            return parse_tv_page(data,content_type,address,pluginid,observer,
+                decoded_documents=docs,document_extraction=extraction)
         return {'rows':[],'info':info,'seasons':list(seasons.values()),'selected_id':identifier,'next_url':None}
     rows=[];used=set()
     for action in actions:
