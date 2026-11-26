@@ -1,7 +1,8 @@
-0.2.62
-- Read Amazon My Stuff pagination metadata and keep readable Watchlist titles with an explicit retry notice if later pages fail.
-- Prepare focused TV seasons in the background, share pending title reads and reuse decoded TV documents.
-- Show Amazon location-refusal details and record playback failures separately from user cancellations.
-- Use one fixed content-title size and one smaller continuation size, with equal canvases and wrapped overflow.
-- Request original-quality Amazon artwork for cards, posters, backgrounds, genres and Extras; remove reduced-size cache reuse.
-- Expand redacted pagination, artwork selection, source dimensions, provider-error and timing diagnostics.
+0.2.64
+- Automatically download pinned regular Chrome 158.0.8127.89 directly from Google on first Windows x64 HD playback; no separate Chrome installation.
+- Verify the Google payload and every private runtime file; reuse the fixed version independently of system browser updates.
+- Show cancellable first-use setup with atomic installation, interrupted-download recovery and temporary-file cleanup.
+- Keep HD playback in stock Kodi with the owned CDM adapter; do not modify Kodi, InputStream Adaptive or a system browser.
+- Include the unmodified 7-Zip extractor, license and exact source; distribute no Google Chrome or Widevine binaries.
+- Preserve accumulated region, Watchlist, season loading, sign-in catalog refresh, Back/resume, title sizing and original artwork fixes.
+- Expand redacted download, integrity, extraction, cancellation, native playback and quality diagnostics.

@@ -1,5 +1,9 @@
 # Smooth Prime
 
+## Current version 0.2.64
+
+Windows x64 HD uses an automatically downloaded, hash-pinned private Chrome runtime. No separate Chrome installation or browser updater is required. Playback stays in stock Kodi. The first-use Google download is about 512 MiB; subsequent playback reuses the verified runtime. The add-on distributes no Google executables. All accumulated fixes are retained. The notes below also preserve historical release behavior.
+
 A dedicated Prime Video interface for Kodi, maintained by AgreeWithScotty.
 
 In Progress is fetched fresh from Amazon on every visit and playback return.
@@ -116,3 +120,6 @@ place. See NOTICE.md and LICENSE for current source and asset licensing.
 
 
 0.2.62: Includes every accumulated draft fix since 0.2.61: My Stuff/Watchlist pagination and partial-title retention, focused season preparation and shared metadata reads, explicit playback-location refusals and terminal outcomes, uniform content-title levels, and original-quality Amazon artwork throughout parser/UI/cache paths. Actual saved provider responses, rendered title PNGs and six real public image downloads were checked. Native Kodi appearance/speed and new authenticated Watchlist retrieval remain unverified. Main installer update.
+
+
+0.2.63: Includes all accumulated playback and sign-in fixes plus cleanup. The bundled standard CDM adapter routes genuine Chrome-hosted Widevine video frames into normal Kodi InputStream Adaptive. Actual stock Kodi21.3/ISA21.5.25 playback selected H2641920x800 and AAC128kbps; 2873frames were decoded, with30.0media seconds in30.0wall seconds, clean stop and restored CDM path. Windows64 HD currently supports installed Chrome158.0.8127.37 only. Chrome/Google CDM are not bundled. Other versions/platforms retain the normal quality/fallback route. Post-sign-in catalog refresh, Back handling, artwork/title fixes and regional data changes are retained. Old custom Kodi/PlayReady experiments are absent. Main only; no public promotion.
